@@ -20,8 +20,12 @@ from terracatalogueclient import Catalogue
 # create catalogue object and authenticate interactively with a browser 
 #catalogue = Catalogue().authenticate()  
 
+import os
+login    = os.environ.get("login")
+password = os.environ.get("password")
+
 # or authenticate with username and password 
-catalogue = catalogue.authenticate_non_interactive(remi.bealle@gmail.com, ) 
+catalogue = catalogue.authenticate_non_interactive(login,password ) 
 
 ### Filter catalogue 
 # search for all products in the WorldCover collection 
