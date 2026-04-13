@@ -60,10 +60,13 @@ const Loader = (() => {
   // ── Format loaders ─────────────────────────────────────────
 
   async function _loadGeoJSON(item) {
-    const res   = await GitHubAPI.fetchRaw(item.path);
-    const data  = await res.json();
-    const color = null;   // LayersModule picks next palette colour
-    const lyr   = _buildGeoJSONLayer(data, color || '#4f8ef7');
+    const data  = await GitHubAPI.get(
+      `/repos/${CONFIG.github.repo}/contents/${item.path}?ref=${GitHubAPI.getBranch()}`
+    );
+    const text   = atob(data.content.replace(/\n/g, ''));
+    const geojson = JSON.parse(text);
+    const color  = null;
+    const lyr    = _buildGeoJSONLayer(geojson, color || '#4f8ef7');
     lyr.addTo(MapModule.get());
     const id = LayersModule.add(_baseName(item.name), 'geojson', lyr, color, item.path);
     _fitBounds(lyr);
@@ -72,9 +75,17 @@ const Loader = (() => {
   }
 
   async function _loadGeoTIFF(item) {
-    const res    = await GitHubAPI.fetchRaw(item.path);
-    const buf    = await res.arrayBuffer();
-    const georaster = await parseGeoraster(buf);
+    // For private repos, raw.githubusercontent.com blocks Authorization headers (CORS).
+    // Use the GitHub Contents API instead, which returns the file base64-encoded.
+    const data = await GitHubAPI.get(
+      `/repos/${CONFIG.github.repo}/contents/${item.path}?ref=${GitHubAPI.getBranch()}`
+    );
+    // Decode base64 → ArrayBuffer
+    const binary = atob(data.content.replace(/\n/g, ''));
+    const buf = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
+
+    const georaster = await parseGeoraster(buf.buffer);
     const lyr    = new GeoRasterLayer({ georaster, opacity: 0.8, resolution: 256 });
     lyr.addTo(MapModule.get());
     const id = LayersModule.add(_baseName(item.name), 'raster', lyr, null, item.path);
@@ -84,8 +95,10 @@ const Loader = (() => {
   }
 
   async function _loadCSV(item) {
-    const res  = await GitHubAPI.fetchRaw(item.path);
-    const text = await res.text();
+    const data = await GitHubAPI.get(
+      `/repos/${CONFIG.github.repo}/contents/${item.path}?ref=${GitHubAPI.getBranch()}`
+    );
+    const text = atob(data.content.replace(/\n/g, ''));
 
     const lines  = text.trim().split('\n');
     const hRaw   = lines[0].split(',').map(h => h.trim());
@@ -134,14 +147,22 @@ const Loader = (() => {
       throw new Error('shpjs library not loaded — cannot parse shapefiles');
     }
 
+    // Helper: fetch a file via API and return its ArrayBuffer (base64 decoded)
+    const fetchBuf = async (path) => {
+      const d = await GitHubAPI.get(
+        `/repos/${CONFIG.github.repo}/contents/${path}?ref=${GitHubAPI.getBranch()}`
+      );
+      const binary = atob(d.content.replace(/\n/g, ''));
+      const buf = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
+      return buf.buffer;
+    };
+
     let buf;
 
     if (_extOf(item.name) === '.zip') {
-      // Zipped shapefile bundle — shpjs handles it directly
-      const res = await GitHubAPI.fetchRaw(item.path);
-      buf = await res.arrayBuffer();
+      buf = await fetchBuf(item.path);
     } else {
-      // Bare .shp — fetch sibling .dbf automatically
       const dir      = item.path.includes('/') ? item.path.substring(0, item.path.lastIndexOf('/')) : '';
       const base     = _baseName(item.name).toLowerCase();
       const siblings = await GitHubAPI.listContents(dir || '');
@@ -149,14 +170,12 @@ const Loader = (() => {
       const getSibling = async (ext) => {
         const f = siblings.find(s => s.name.toLowerCase() === base + ext);
         if (!f) return null;
-        const r = await GitHubAPI.fetchRaw(f.path);
-        return r.arrayBuffer();
+        return fetchBuf(f.path);
       };
 
       const shpBuf = await getSibling('.shp');
       if (!shpBuf) throw new Error('.shp file not found in directory');
       const dbfBuf = await getSibling('.dbf');
-
       buf = { shp: shpBuf, dbf: dbfBuf };
     }
 
