@@ -86,7 +86,7 @@ const Loader = (() => {
     for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
 
     const georaster = await parseGeoraster(buf.buffer);
-    const lyr    = new GeoRasterLayer({ georaster, opacity: 0.8, resolution: 256 });
+    const lyr = new GeoRasterLayer({ georaster, opacity: 0.8, resolution: 256 });
     lyr.addTo(MapModule.get());
     const id = LayersModule.add(_baseName(item.name), 'raster', lyr, null, item.path);
     _fitBounds(lyr);
