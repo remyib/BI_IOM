@@ -1,0 +1,133 @@
+/* ─────────────────────────────────────────────────────────────
+   layout.css — Header, workspace, side panel, tabs, status bar
+───────────────────────────────────────────────────────────── */
+
+/* ── Header ─────────────────────────────────────────────────── */
+header {
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  z-index: 1000;
+  flex-shrink: 0;
+}
+
+.logo {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.logo span { color: var(--text-muted); font-weight: 400; }
+
+.header-sep { flex: 1; }
+
+.header-pill {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.hamburger {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ── Workspace ───────────────────────────────────────────────── */
+.workspace {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── Side Panel ──────────────────────────────────────────────── */
+.panel {
+  width: var(--panel-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  z-index: 500;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  background: none;
+  transition: all 0.15s;
+}
+.tab:hover  { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-panel              { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.tab-panel.active       { display: flex; }
+
+/* ── Status Bar ──────────────────────────────────────────────── */
+.statusbar {
+  padding: 6px 14px;
+  border-top: 1px solid var(--border);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.status-dot.on { background: var(--accent); }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  :root { --panel-w: 100vw; }
+
+  .panel {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    transform: translateX(-100%);
+  }
+  .panel.open { transform: translateX(0); }
+
+  .hamburger    { display: flex; }
+  .header-pill  { display: none; }
+}
