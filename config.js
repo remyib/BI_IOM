@@ -7,7 +7,7 @@ const CONFIG = Object.freeze({
 
   // ── GitHub ──────────────────────────────────────────────────
   github: {
-    repo:          'remyib/BI_IOM',
+    repo:          'remyib/BI.IOM',
     apiBase:       'https://api.github.com',
     rawBase:       'https://raw.githubusercontent.com',
     defaultBranch: 'main',
